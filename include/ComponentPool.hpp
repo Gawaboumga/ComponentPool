@@ -3,7 +3,6 @@
 
 #include <cstddef>
 #include <memory>
-#include <string>
 
 template <class Id, class Component>
 class ComponentPool
@@ -50,8 +49,6 @@ class ComponentPool
 
 		size_type size() const;
 		void swap(ComponentPool& other);
-
-		std::string toString() const;
 
 	private:
 
