@@ -1,7 +1,7 @@
 #ifndef COMPONENT_POOL_ITERATOR_HPP
 #define COMPONENT_POOL_ITERATOR_HPP
 
-class ComponentPoolIterator
+class ComponentPoolIterator : std::forward_iterator_tag
 {
 	public:
 
@@ -32,11 +32,34 @@ class ComponentPoolIterator
 			return *m_component;
 		}
 
+		Component* operator->()
+		{
+			return m_component;
+		}
+
+		const Component* operator->() const
+		{
+			return m_component;
+		}
+
 		ComponentPoolIterator& operator++()
 		{
 			++m_id;
 			++m_component;
 			return *this;
+		}
+
+		ComponentPoolIterator operator++(int)
+		{
+			auto copy = *this;
+			++m_id;
+			++m_component;
+			return copy;
+		}
+
+		Id* get_id() const
+		{
+			return m_id;
 		}
 
 	private:

@@ -14,9 +14,12 @@ class ComponentPool
 	public:
 
 		using key_type = Id;
-		using value_type = Component;
+		using mapped_type = Component;
+		using value_type = std::pair<const Id, Component>;
 		using size_type = std::size_t;
 		using difference_type = std::ptrdiff_t;
+		using reference = std::pair<const Id, Component>&;
+		using const_reference = const std::pair<const Id, Component>&;
 		using iterator = ComponentPoolIterator;
 		using const_iterator = const ComponentPoolIterator;
 
@@ -39,11 +42,13 @@ class ComponentPool
 		void clear();
 
 		bool empty() const;
+		iterator erase(const_iterator pos);
+		bool erase(const key_type& key);
 
-		iterator find(const Id& id);
-		const_iterator find(const Id& id) const;
+		iterator find(const key_type& id);
+		const_iterator find(const key_type& id) const;
 
-		iterator insert(Id&& id, Component&& component);
+		iterator insert(key_type&& id, mapped_type&& component);
 
 		ComponentPool& operator=(ComponentPool&& other);
 
@@ -52,14 +57,17 @@ class ComponentPool
 
 	private:
 
+		key_type* end_ids() const;
+		mapped_type* end_components() const;
+
 		void reallocate(size_type new_capacity);
 
-		key_type* sort_pool(Id&& id);
+		key_type* sort_pool(key_type&& id);
 
 	private:
 
 		std::unique_ptr<key_type[]> m_ids;
-		std::unique_ptr<value_type[]> m_components;
+		std::unique_ptr<mapped_type[]> m_components;
 		size_type m_size;
 		size_type m_capacity;
 };

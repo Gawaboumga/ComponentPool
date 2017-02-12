@@ -115,3 +115,38 @@ SCENARIO("Two component pools and their move semantics", "[ComponentPool]")
 		}
 	}
 }
+
+SCENARIO("One component pool and erase", "[ComponentPool]")
+{
+	GIVEN("One component pool with three elements")
+	{
+		ComponentPool<int, char> componentPool{};
+		componentPool.insert(3, '5');
+		componentPool.insert(5, '3');
+		componentPool.insert(4, '6');
+
+		WHEN("We remove the middle element (4) by iterator")
+		{
+			auto it = componentPool.erase(componentPool.find(4));
+
+			THEN("It's no more present")
+			{
+				REQUIRE(componentPool.size() == 2);
+				REQUIRE((++componentPool.find(3)) == componentPool.find(5));
+				REQUIRE(it == componentPool.find(5));
+			}
+		}
+
+		WHEN("We remove the middle element (4) by key")
+		{
+			auto present = componentPool.erase(4);
+
+			THEN("It's no more present")
+			{
+				REQUIRE(present);
+				REQUIRE(componentPool.size() == 2);
+				REQUIRE((++componentPool.find(3)) == componentPool.find(5));
+			}
+		}
+	}
+}

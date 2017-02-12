@@ -23,13 +23,13 @@ typename ComponentPool<Id, Component>::const_iterator ComponentPool<Id, Componen
 template <class Id, class Component>
 typename ComponentPool<Id, Component>::iterator ComponentPool<Id, Component>::end()
 {
-	return { m_ids.get() + size(), m_components.get() + size() };
+	return { end_ids(), end_components() };
 }
 
 template <class Id, class Component>
 typename ComponentPool<Id, Component>::const_iterator ComponentPool<Id, Component>::end() const
 {
-	return { m_ids.get() + size(), m_components.get() + size() };
+	return { end_ids(), end_components() };
 }
 
 template <class Id, class Component>
@@ -75,30 +75,53 @@ bool ComponentPool<Id, Component>::empty() const
 }
 
 template <class Id, class Component>
-typename ComponentPool<Id, Component>::iterator ComponentPool<Id, Component>::find(const Id& id)
+typename ComponentPool<Id, Component>::iterator ComponentPool<Id, Component>::erase(const_iterator pos)
 {
-	auto id_ptr = std::find(m_ids.get(), m_ids.get() + size(), id);
+	auto distance_deleted_id = std::distance(m_ids.get(), pos.get_id());
+	std::move(m_ids.get() + distance_deleted_id + 1, end_ids(), m_ids.get() + distance_deleted_id);
+	std::move(m_components.get() + distance_deleted_id + 1, end_components(), m_components.get() + distance_deleted_id);
+	m_size -= 1;
+	return { m_ids.get() + distance_deleted_id, m_components.get() + distance_deleted_id };;
+}
+
+template <class Id, class Component>
+bool ComponentPool<Id, Component>::erase(const key_type& key)
+{
+	auto it = find(key);
+	if (it != end())
+	{
+		erase(it);
+		return true;
+	}
+
+	return false;
+}
+
+template <class Id, class Component>
+typename ComponentPool<Id, Component>::iterator ComponentPool<Id, Component>::find(const key_type& id)
+{
+	auto id_ptr = std::find(m_ids.get(), end_ids(), id);
 	return { id_ptr, m_components.get() + std::distance(m_ids.get(), id_ptr) };
 }
 
 template <class Id, class Component>
-typename ComponentPool<Id, Component>::const_iterator ComponentPool<Id, Component>::find(const Id& id) const
+typename ComponentPool<Id, Component>::const_iterator ComponentPool<Id, Component>::find(const key_type& id) const
 {
-	auto id_ptr = std::find(m_ids.get(), m_ids.get() + size(), id);
+	auto id_ptr = std::find(m_ids.get(), end_ids(), id);
 	return { id_ptr, m_components.get() + std::distance(m_ids.get(), id_ptr) };
 }
 
 template <class Id, class Component>
-typename ComponentPool<Id, Component>::iterator ComponentPool<Id, Component>::insert(Id&& id, Component&& component)
+typename ComponentPool<Id, Component>::iterator ComponentPool<Id, Component>::insert(key_type&& id, mapped_type&& component)
 {
 	auto old_size = size();
 	auto new_size = old_size + 1;
 	reallocate(new_size);
 
-	key_type* new_position = sort_pool(std::forward<Id>(id));
+	key_type* new_position = sort_pool(std::forward<key_type>(id));
 	auto distance_new_position = std::distance(m_ids.get(), new_position);
-	*new_position = std::forward<Id>(id);
-	m_components[distance_new_position] = std::forward<Component>(component);
+	*new_position = std::forward<key_type>(id);
+	m_components[distance_new_position] = std::forward<mapped_type>(component);
 
 	m_size = new_size;
 
@@ -132,16 +155,28 @@ void ComponentPool<Id, Component>::swap(ComponentPool& other)
 }
 
 template <class Id, class Component>
+typename ComponentPool<Id, Component>::key_type* ComponentPool<Id, Component>::end_ids() const
+{
+	return m_ids.get() + size();
+}
+
+template <class Id, class Component>
+typename ComponentPool<Id, Component>::mapped_type* ComponentPool<Id, Component>::end_components() const
+{
+	return m_components.get() + size();
+}
+
+template <class Id, class Component>
 void ComponentPool<Id, Component>::reallocate(size_type new_capacity)
 {
 	if (new_capacity < capacity())
 		return;
 
 	auto m_new_ids = std::make_unique<key_type[]>(new_capacity);
-	auto m_new_components = std::make_unique<value_type[]>(new_capacity);
+	auto m_new_components = std::make_unique<mapped_type[]>(new_capacity);
 
-	internal::uninitialized_move(m_ids.get(), m_ids.get() + size(), m_new_ids.get());
-	internal::uninitialized_move(m_components.get(), m_components.get() + size(), m_new_components.get());
+	internal::uninitialized_move(m_ids.get(), end_ids(), m_new_ids.get());
+	internal::uninitialized_move(m_components.get(), end_components(), m_new_components.get());
 
 	std::swap(m_ids, m_new_ids);
 	std::swap(m_components, m_new_components);
@@ -149,12 +184,12 @@ void ComponentPool<Id, Component>::reallocate(size_type new_capacity)
 }
 
 template <class Id, class Component>
-typename ComponentPool<Id, Component>::key_type* ComponentPool<Id, Component>::sort_pool(Id&& new_id)
+typename ComponentPool<Id, Component>::key_type* ComponentPool<Id, Component>::sort_pool(key_type&& new_id)
 {
-	auto id_ptr = std::lower_bound(m_ids.get(), m_ids.get() + size(), new_id);
+	auto id_ptr = std::lower_bound(m_ids.get(), end_ids(), new_id);
 	auto distance_new_id = std::distance(m_ids.get(), id_ptr);
-	std::move_backward(id_ptr, m_ids.get() + size(), m_ids.get() + size() + 1);
-	std::move_backward(m_components.get() + distance_new_id, m_components.get() + size(), m_components.get() + size() + 1);
+	std::move_backward(id_ptr, end_ids(), end_ids() + 1);
+	std::move_backward(m_components.get() + distance_new_id, end_components(), end_components() + 1);
 	return id_ptr;
 }
 
