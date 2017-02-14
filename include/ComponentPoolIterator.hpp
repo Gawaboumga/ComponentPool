@@ -5,6 +5,11 @@ class ComponentPoolIterator : std::forward_iterator_tag
 {
 	public:
 
+		using key_type = Id;
+		using mapped_type = Component;
+
+	public:
+
 		ComponentPoolIterator() = default;
 		ComponentPoolIterator(Id* id, Component* component) :
 			m_id{ id },
@@ -19,7 +24,7 @@ class ComponentPoolIterator : std::forward_iterator_tag
 
 		bool operator!=(const ComponentPoolIterator& rhs) const
 		{
-			return m_id != rhs.m_id;
+			return !operator==(rhs);
 		}
 
 		Component& operator*()

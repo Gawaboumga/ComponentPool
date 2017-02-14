@@ -48,7 +48,7 @@ class ComponentPool
 		iterator find(const key_type& id);
 		const_iterator find(const key_type& id) const;
 
-		iterator insert(key_type&& id, mapped_type&& component);
+		iterator insert(const key_type& id, const mapped_type& component);
 
 		ComponentPool& operator=(ComponentPool&& other);
 
@@ -62,7 +62,7 @@ class ComponentPool
 
 		void reallocate(size_type new_capacity);
 
-		key_type* sort_pool(key_type&& id);
+		key_type* sort_pool(const key_type& id);
 
 	private:
 

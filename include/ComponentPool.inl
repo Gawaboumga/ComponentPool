@@ -112,16 +112,16 @@ typename ComponentPool<Id, Component>::const_iterator ComponentPool<Id, Componen
 }
 
 template <class Id, class Component>
-typename ComponentPool<Id, Component>::iterator ComponentPool<Id, Component>::insert(key_type&& id, mapped_type&& component)
+typename ComponentPool<Id, Component>::iterator ComponentPool<Id, Component>::insert(const key_type& id, const mapped_type& component)
 {
 	auto old_size = size();
 	auto new_size = old_size + 1;
 	reallocate(new_size);
 
-	key_type* new_position = sort_pool(std::forward<key_type>(id));
+	key_type* new_position = sort_pool(id);
 	auto distance_new_position = std::distance(m_ids.get(), new_position);
-	*new_position = std::forward<key_type>(id);
-	m_components[distance_new_position] = std::forward<mapped_type>(component);
+	*new_position = id;
+	m_components[distance_new_position] = component;
 
 	m_size = new_size;
 
@@ -184,7 +184,7 @@ void ComponentPool<Id, Component>::reallocate(size_type new_capacity)
 }
 
 template <class Id, class Component>
-typename ComponentPool<Id, Component>::key_type* ComponentPool<Id, Component>::sort_pool(key_type&& new_id)
+typename ComponentPool<Id, Component>::key_type* ComponentPool<Id, Component>::sort_pool(const key_type& new_id)
 {
 	auto id_ptr = std::lower_bound(m_ids.get(), end_ids(), new_id);
 	auto distance_new_id = std::distance(m_ids.get(), id_ptr);
